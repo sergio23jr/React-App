@@ -9,20 +9,33 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000
 
-// middleware parce JSON
+// Middleware parce JSON
 app.use(cors());
 app.use(express.json());
 
-// connection to mongoose
-const uri = process.env.ATLAS_URI;
-mongoose.connect(uri, { useNewUrlParser: true, useCreateIndex: true });
+// Serve up static assets (usually on heroku)
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static("client/build"));
+}
 
+// Connection to mongoose
+mongoose.connect(
+    process.env.MONGODB_URI || "mongodb://ReactApp:password123@ds261567.mlab.com:61567/heroku_v194ld7s"
+)
+
+// Confirm we are connected to DB
 const connection = mongoose.connection;
 connection.once('open', () => {
     console.log(`MongoDB database connection established successful`);
-})
+});
+
+const exercisesRouter = require("./routes/exercises");
+const userRouter = require("./routes/users");
+
+app.use("/exercises", exercisesRouter);
+app.use("/users", userRouter);
 
 // starts express server
-app.listen(port => {
+app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 })
